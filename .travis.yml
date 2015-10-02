@@ -1,0 +1,15 @@
+language:
+    - objective-c
+
+osx_image: xcode7
+
+before_install:
+    - brew update
+
+install:
+    - brew install cmake
+
+script:
+    - cmake --version
+    - cmake -H. -B_build -GXcode
+    - cmake --build _build
