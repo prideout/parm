@@ -6,6 +6,9 @@ add_executable(
     MACOSX_BUNDLE
     src/AppDelegate.h
     src/AppDelegate.mm
+    src/GameViewController.h
+    src/GameViewController.m
+    src/SharedStructures.h
     src/main.mm
     src/MainMenu.xib
 )
@@ -24,4 +27,9 @@ set_target_properties(
     ${CMAKE_CURRENT_LIST_DIR}/src/plist.in
 )
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework AppKit")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+  -framework AppKit \
+  -framework Metal \
+  -framework MetalKit \
+  -framework ModelIO"
+)
