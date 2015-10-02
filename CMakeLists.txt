@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(parm)
+file(GLOB CSRC src/*.mm src/*.h)
 
 add_executable(
     parm
     MACOSX_BUNDLE
-    src/AppDelegate.h
-    src/AppDelegate.mm
-    src/GameViewController.h
-    src/GameViewController.m
-    src/SharedStructures.h
-    src/main.mm
+    ${CSRC}
     src/MainMenu.xib
 )
 
