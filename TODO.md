@@ -1,0 +1,3 @@
+- Rename `foo`
+- Copy stuff from FirstMetalApp
+- 'q' to quit
