@@ -6,11 +6,13 @@ add_executable(
     parm
     MACOSX_BUNDLE
     ${CSRC}
+    src/Shaders.metal
     src/MainMenu.xib
 )
 
 set_source_files_properties(
     src/MainMenu.xib
+    src/Shaders.metal
     PROPERTIES
     MACOSX_PACKAGE_LOCATION
     Resources

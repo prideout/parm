@@ -1,2 +1,2 @@
-- Copy more stuff from FirstMetalApp
+
 - 'q' to quit
