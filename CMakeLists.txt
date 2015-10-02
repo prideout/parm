@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.8)
-project(foo)
+project(parm)
 
 add_executable(
-    foo
+    parm
     MACOSX_BUNDLE
     src/AppDelegate.h
     src/AppDelegate.mm
@@ -18,7 +18,7 @@ set_source_files_properties(
 )
 
 set_target_properties(
-    foo
+    parm
     PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST
     ${CMAKE_CURRENT_LIST_DIR}/src/plist.in
