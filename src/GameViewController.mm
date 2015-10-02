@@ -1,11 +1,3 @@
-//
-//  GameViewController.m
-//  FirstMetalApp
-//
-//  Created by Philip Rideout on 9/30/15.
-//  Copyright (c) 2015 Philip Rideout. All rights reserved.
-//
-
 #import "GameViewController.h"
 #import <Metal/Metal.h>
 #import <simd/simd.h>
@@ -22,25 +14,25 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
 {
     // view
     MTKView *_view;
-    
+
     // controller
     dispatch_semaphore_t _inflight_semaphore;
     id <MTLBuffer> _dynamicConstantBuffer;
     uint8_t _constantDataBufferIndex;
-    
+
     // renderer
     id <MTLDevice> _device;
     id <MTLCommandQueue> _commandQueue;
     id <MTLLibrary> _defaultLibrary;
     id <MTLRenderPipelineState> _pipelineState;
     id <MTLDepthStencilState> _depthState;
-    
+
     // uniforms
     matrix_float4x4 _projectionMatrix;
     matrix_float4x4 _viewMatrix;
     uniforms_t _uniform_buffer;
     float _rotation;
-    
+
     // meshes
     MTKMesh *_boxMesh;
 }
@@ -48,10 +40,11 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+
     _constantDataBufferIndex = 0;
     _inflight_semaphore = dispatch_semaphore_create(3);
-    
+    [self.view.window makeFirstResponder:self];
+
     [self _setupMetal];
     [self _setupView];
     [self _loadAssets];
@@ -63,7 +56,7 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     _view = (MTKView *)self.view;
     _view.delegate = self;
     _view.device = _device;
-    
+
     // Setup the render target, choose values based on your app
     _view.sampleCount = 4;
     _view.depthStencilPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
@@ -76,7 +69,7 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
 
     // Create a new command queue
     _commandQueue = [_device newCommandQueue];
-    
+
     // Load all the shader files with a metal file extension in the project
     _defaultLibrary = [_device newDefaultLibrary];
 }
@@ -87,24 +80,24 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     MDLMesh *mdl = [MDLMesh newBoxWithDimensions:(vector_float3){2,2,2} segments:(vector_uint3){1,1,1}
                                     geometryType:MDLGeometryTypeTriangles inwardNormals:NO
                                        allocator:[[MTKMeshBufferAllocator alloc] initWithDevice: _device]];
-    
+
     _boxMesh = [[MTKMesh alloc] initWithMesh:mdl device:_device error:nil];
-    
+
     // Allocate one region of memory for the uniform buffer
     _dynamicConstantBuffer = [_device newBufferWithLength:kMaxBytesPerFrame options:0];
     _dynamicConstantBuffer.label = @"UniformBuffer";
-    
+
     // Load the fragment program into the library
     id <MTLFunction> fragmentProgram = [_defaultLibrary newFunctionWithName:@"lighting_fragment"];
-    
+
     // Load the vertex program into the library
     id <MTLFunction> vertexProgram = [_defaultLibrary newFunctionWithName:@"lighting_vertex"];
-    
+
     // Create a vertex descriptor from the MTKMesh
     MTLVertexDescriptor *vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(_boxMesh.vertexDescriptor);
     vertexDescriptor.layouts[0].stepRate = 1;
     vertexDescriptor.layouts[0].stepFunction = MTLVertexStepFunctionPerVertex;
-    
+
     // Create a reusable pipeline state
     MTLRenderPipelineDescriptor *pipelineStateDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
     pipelineStateDescriptor.label = @"MyPipeline";
@@ -115,13 +108,13 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     pipelineStateDescriptor.colorAttachments[0].pixelFormat = _view.colorPixelFormat;
     pipelineStateDescriptor.depthAttachmentPixelFormat = _view.depthStencilPixelFormat;
     pipelineStateDescriptor.stencilAttachmentPixelFormat = _view.depthStencilPixelFormat;
-    
+
     NSError *error = NULL;
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
     if (!_pipelineState) {
         NSLog(@"Failed to created pipeline state, error %@", error);
     }
-    
+
     MTLDepthStencilDescriptor *depthStateDesc = [[MTLDepthStencilDescriptor alloc] init];
     depthStateDesc.depthCompareFunction = MTLCompareFunctionLess;
     depthStateDesc.depthWriteEnabled = YES;
@@ -131,7 +124,7 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
 - (void)_render
 {
     dispatch_semaphore_wait(_inflight_semaphore, DISPATCH_TIME_FOREVER);
-    
+
     [self _update];
 
     // Create a new command buffer for each renderpass to the current drawable
@@ -143,7 +136,7 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
         dispatch_semaphore_signal(block_sema);
     }];
-    
+
     // Obtain a renderPassDescriptor generated from the view's drawable textures
     MTLRenderPassDescriptor* renderPassDescriptor = _view.currentRenderPassDescriptor;
 
@@ -153,22 +146,22 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
         id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"MyRenderEncoder";
         [renderEncoder setDepthStencilState:_depthState];
-        
+
         // Set context state
         [renderEncoder pushDebugGroup:@"DrawCube"];
         [renderEncoder setRenderPipelineState:_pipelineState];
         [renderEncoder setVertexBuffer:_boxMesh.vertexBuffers[0].buffer offset:_boxMesh.vertexBuffers[0].offset atIndex:0 ];
         [renderEncoder setVertexBuffer:_dynamicConstantBuffer offset:(sizeof(uniforms_t) * _constantDataBufferIndex) atIndex:1 ];
-        
+
         MTKSubmesh* submesh = _boxMesh.submeshes[0];
         // Tell the render context we want to draw our primitives
         [renderEncoder drawIndexedPrimitives:submesh.primitiveType indexCount:submesh.indexCount indexType:submesh.indexType indexBuffer:submesh.indexBuffer.buffer indexBufferOffset:submesh.indexBuffer.offset];
 
         [renderEncoder popDebugGroup];
-        
+
         // We're done encoding commands
         [renderEncoder endEncoding];
-        
+
         // Schedule a present once the framebuffer is complete using the current drawable
         [commandBuffer presentDrawable:_view.currentDrawable];
     }
@@ -185,7 +178,7 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     // When reshape is called, update the view and projection matricies since this means the view orientation or size changed
     float aspect = fabs(self.view.bounds.size.width / self.view.bounds.size.height);
     _projectionMatrix = matrix_from_perspective_fov_aspectLH(65.0f * (M_PI / 180.0f), aspect, 0.1f, 100.0f);
-    
+
     _viewMatrix = matrix_identity_float4x4;
 }
 
@@ -194,13 +187,13 @@ static const size_t kMaxBytesPerFrame = 1024*1024;
     matrix_float4x4 base_model = matrix_multiply(matrix_from_translation(0.0f, 0.0f, 5.0f), matrix_from_rotation(_rotation, 0.0f, 1.0f, 0.0f));
     matrix_float4x4 base_mv = matrix_multiply(_viewMatrix, base_model);
     matrix_float4x4 modelViewMatrix = matrix_multiply(base_mv, matrix_from_rotation(_rotation, 1.0f, 1.0f, 1.0f));
-    
+
     // Load constant buffer data into appropriate buffer at current index
     uniforms_t *uniforms = &((uniforms_t *)[_dynamicConstantBuffer contents])[_constantDataBufferIndex];
 
     uniforms->normal_matrix = matrix_invert(matrix_transpose(modelViewMatrix));
     uniforms->modelview_projection_matrix = matrix_multiply(_projectionMatrix, modelViewMatrix);
-    
+
     _rotation += 0.01f;
 }
 
@@ -226,14 +219,14 @@ static matrix_float4x4 matrix_from_perspective_fov_aspectLH(const float fovY, co
     float yscale = 1.0f / tanf(fovY * 0.5f); // 1 / tan == cot
     float xscale = yscale / aspect;
     float q = farZ / (farZ - nearZ);
-    
+
     matrix_float4x4 m = {
         .columns[0] = { xscale, 0.0f, 0.0f, 0.0f },
         .columns[1] = { 0.0f, yscale, 0.0f, 0.0f },
         .columns[2] = { 0.0f, 0.0f, q, 1.0f },
         .columns[3] = { 0.0f, 0.0f, q * -nearZ, 0.0f }
     };
-    
+
     return m;
 }
 
@@ -250,7 +243,7 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
     float cos = cosf(radians);
     float cosp = 1.0f - cos;
     float sin = sinf(radians);
-    
+
     matrix_float4x4 m = {
         .columns[0] = {
             cos + cosp * v.x * v.x,
@@ -258,25 +251,35 @@ static matrix_float4x4 matrix_from_rotation(float radians, float x, float y, flo
             cosp * v.x * v.z - v.y * sin,
             0.0f,
         },
-        
+
         .columns[1] = {
             cosp * v.x * v.y - v.z * sin,
             cos + cosp * v.y * v.y,
             cosp * v.y * v.z + v.x * sin,
             0.0f,
         },
-        
+
         .columns[2] = {
             cosp * v.x * v.z + v.y * sin,
             cosp * v.y * v.z - v.x * sin,
             cos + cosp * v.z * v.z,
             0.0f,
         },
-        
+
         .columns[3] = { 0.0f, 0.0f, 0.0f, 1.0f
         }
     };
     return m;
+}
+
+-(void)keyDown:(NSEvent *)theEvent
+{
+    unichar characterHit = [[theEvent charactersIgnoringModifiers] characterAtIndex:0];
+    if (characterHit == 'q' || characterHit == 27) {
+        [NSApp terminate:self];
+    } else {
+        [super keyDown:theEvent];
+    }
 }
 
 @end
