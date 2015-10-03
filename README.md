@@ -10,7 +10,7 @@ This uses CMake even though it is obviously not a cross-platform application.  T
 ```bash
 > brew install cmake
 > . env.sh # set up the aliases used below
-> create # invoke cmake to [re]create an Xcode project in _build
+> init # invoke cmake to [re]create an Xcode project in _build
 > build  # build the app
 > run # run the app
 ```
