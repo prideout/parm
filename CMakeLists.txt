@@ -1,33 +1,36 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(parm)
-file(GLOB CSRC src/*.mm src/*.h)
+
+set(CSRC
+    src/AppDelegate.mm
+    src/GameViewController.mm
+    src/main.mm
+    src/AppDelegate.h
+    src/GameViewController.h
+    src/SharedStructures.h)
 
 add_executable(
     parm
     MACOSX_BUNDLE
     ${CSRC}
     src/Shaders.metal
-    src/MainMenu.xib
-)
+    src/MainMenu.xib)
 
 set_source_files_properties(
     src/MainMenu.xib
     src/Shaders.metal
     PROPERTIES
     MACOSX_PACKAGE_LOCATION
-    Resources
-)
+    Resources)
 
 set_target_properties(
     parm
     PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST
-    ${CMAKE_CURRENT_LIST_DIR}/src/plist.in
-)
+    ${CMAKE_CURRENT_LIST_DIR}/src/plist.in)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
   -framework AppKit \
   -framework Metal \
   -framework MetalKit \
-  -framework ModelIO"
-)
+  -framework ModelIO")

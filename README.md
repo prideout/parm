@@ -14,3 +14,7 @@ This uses CMake even though it is obviously not a cross-platform application.  T
 > build  # build the app
 > run # run the app
 ```
+
+See also:
+
+https://github.com/naleksiev/mtlpp
