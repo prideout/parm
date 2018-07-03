@@ -1,7 +1,4 @@
-parm
-====
-
-Barebones OS X Metal application.
+Minimalist macOS Metal application.
 
 [![Build Status](https://travis-ci.org/prideout/parm.png?branch=master)](https://travis-ci.org/prideout/parm)
 
@@ -10,9 +7,10 @@ This uses CMake even though it is obviously not a cross-platform application.  T
 ```bash
 > brew install cmake
 > . env.sh # set up the aliases used below
-> init # invoke cmake to [re]create an Xcode project in _build
-> build  # build the app
-> run # run the app
+> init     # invoke cmake to [re]create an Xcode project in _build
+> build    # build the app
+> run      # launch the app
+> debug    # debug the app with lldb
 ```
 
 See also:
