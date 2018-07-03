@@ -1,5 +1,3 @@
-Minimalist macOS Metal application.
-
 [![Build Status](https://travis-ci.org/prideout/parm.svg?branch=master)](https://travis-ci.org/prideout/parm)
 
 This uses CMake even though it is obviously not a cross-platform application.  This allows the build to be expressed as a single text file.
